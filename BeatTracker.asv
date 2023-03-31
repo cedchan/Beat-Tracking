@@ -1,9 +1,7 @@
 classdef BeatTracker < handle
-    properties
-        % List of sequential onsets in ms
-        onsets
-        % Cell array of current hypotheses
-        H = {}
+    properties (SetAccess = private)
+        onsets      % List of sequential onsets in ms
+        H = {}      % Cell array of current hypotheses
     end
 
     methods
@@ -28,14 +26,19 @@ classdef BeatTracker < handle
                 % append score to hyp's internal scores list
             end
 
-            % Iterate through every unique pair h1, h2 in H to delete ones
-            % that are too similar to each other.
+            % Iterate through every unique pair hyp1, hyp2 in H to delete 
+            % ones that are too similar to each other.
             m = nchoosek(1:length(self.H),2);
             for i = 1:height(m)
-                h1 = self.H{m(i,1)};
-                h2 = self.H{m(i,2)};
-                % if h
+                hyp1 = self.H{m(i,1)};
+                hyp2 = self.H{m(i,2)};
+                % if h1, h2 too similar, remove the most recently created
             end
+        end
+
+        % Finds optimal beat at different times given score
+        function res = results(self)
+            
         end
     end
 end

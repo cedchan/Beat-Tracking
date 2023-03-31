@@ -35,5 +35,10 @@ classdef BeatTracker < handle
                 % if h1, h2 too similar, remove the most recently created
             end
         end
+
+        % Finds optimal beat at different times given score
+        function res = results(self)
+            
+        end
     end
 end

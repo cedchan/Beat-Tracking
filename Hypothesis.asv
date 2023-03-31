@@ -73,6 +73,50 @@ classdef Hypothesis < handle
     end
 end
 
+% Finds closest onset to each projected beat, without repetition. If two
+% projections are closest to the same onset, the closer one wins. Truncates
+% if there are not enough beats in either.
+% 
+% TODO: Need some way to deal with projection being multiple of onsets
+% 
+% Inputs:
+%   proj: Projected beats times in ms
+%   onsets: Actual onset times in ms
+function [projMatch,onsetMatch] = closestPairs(proj,onsets)
+    projN = length(proj);
+    onsetsN = length(onsets);
+    pair = zeros(1,projN);      % Tracks closest onset per proj
+    dist = Inf(1,projN);        % Tracks distance of closest onset
+    onsetDist = Inf(1,onsetsN); % Tracks shortest distance to onset
+    
+    pair(1) = onsets(1);
+    dist(1) = abs(proj(1)-onsets(pair(1)));
+    for i = 1:projN
+        pair(i) = pair(i-1);                    % initialize to prev proj's match TODO: WILL OUT OF BOUNDS FOR 1
+        newDist = abs(proj(i)-onsets(pair(i))); % inital dist
+        while pair(i)<onsetsN && dist(i)>=newDist
+            pair(i) = pair(i)+1;
+            dist(i) = newDist;
+            newDist = abs(proj(i)-onsets(pair(i)+1));
+        end
+
+        % Updates onsetDist if pair is shorter
+        if dist(i) < onsetDist(pair(i))
+            onsetDist(pair(i)) = dist(i);
+        end
+    end
+
+    % Above loop still O(n) I think
+
+
+    projMatch = zeros(1,min(projN,onsetsN));
+    onsetsMatch = zeros(1,min(projN,onsetsN));
+    for i = 1:projN
+        best = pair(i);
+        bestDist = dist(i);
+        if pair(i)                     % TODO: WIll out of bounds for 1
+    end
+end
 
 % Calculates number of hits as sum of 0.01^(|proj-onset|/period) for each
 % period and onset.
@@ -81,7 +125,7 @@ function numHits = concurrence(proj,onsets,period)
     % onset, not just corresponding indices. Dimensions wont be equal
     error = abs(proj-onsets);
     scaledErr = error/period;
-    hits = 0.01^scaledErr;
+    hits = 0.01^scaledErr;      % Error weight function, could use Gauss
     numHits = sum(hits);
 end
 
