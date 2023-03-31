@@ -109,13 +109,41 @@ function [projMatch,onsetMatch] = closestPairs(proj,onsets)
     % Above loop still O(n) I think
 
 
-    projMatch = zeros(1,min(projN,onsetsN));
-    onsetsMatch = zeros(1,min(projN,onsetsN));
-    for i = 1:projN
-        best = pair(i);
-        bestDist = dist(i);
-        if pair(i)                     % TODO: WIll out of bounds for 1
+    projMatch = zeros(2,min(projN,onsetsN));
+    onsetMatch = zeros(2,min(projN,onsetsN));
+    matchDist = zeros(1,length(matches));
+    projMatch(1) = 1;
+    onsetMatch(1) = pair(1);
+    matchDist(1) = dist(1);
+    matchIdx = 1;
+    for i = 2:projN
+        if onsetMatch(matchIdx) ~= pair(i)                     % TODO: WIll out of bounds for 1
+            projMatch(matchIdx+1) = i;
+            onsetMatch(matchIdx+1) = pair(i);
+            matchDist(matchIdx+1) = dist(i);
+            matchIdx = matchIdx+1;
+        elseif dist(i) < matchDist(matchIdx) % override its pair
+            oldMatch = projMatch(matchIdx); % Previous overriden match
+            candidate = onsetsMatch(matchIdx-1); % TODO Verify this won't happen on 1.
+
+            projMatch(matchIdx) = i;
+            matchDist(matchIdx) = dist(i);
+
+            % Iterate back to correct
+            while abs(proj(oldMatch)-onsets(onsetsMatch(matchIdx-1)))<
+
+            end
+        elseif % in bounds, then restart
+
+        end
     end
+end
+
+
+function [newProj,newOnsets,newDist] = feedBack(projMatch,onsetsMatch, ...
+    matchDists)
+    
+
 end
 
 % Calculates number of hits as sum of 0.01^(|proj-onset|/period) for each
