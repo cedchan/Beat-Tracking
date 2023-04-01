@@ -1,5 +1,2 @@
-matches = cell(1,10);
-matches(1) = Match(1,2,10);
-matches(1).proj
-matches(1).proj = -1;
-matches(1).proj
+cells = {Match(1,2,3) Match(4,5,6) Match(7,8,9)};
+cellfun(@(m) m.dist, cells)
