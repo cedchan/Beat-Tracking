@@ -13,19 +13,26 @@ classdef Hypothesis < handle
 
     methods
         % Constructor
-        function obj = Hypothesis(periodNew,phaseNew,windowNew)
-            obj.period = periodNew;
-            obj.phase = phaseNew;
-            obj.window = windowNew;
+        function obj = Hypothesis(period,phase,window)
+            obj.period = period;
+            obj.phase = phase;
+            obj.window = window;
         end
 
-        % Returns projections from t ms
-        function proj = project(self,s,t)
+        % Returns projections from t ms back window ms
+        function proj = project(self,t)
+            % Start window ms back
+            s = t-self.window;
+            if s<0
+                error("At least "+self.window+" seconds needed to "+ ...
+                    "project hypothesis");
+            end
+
             sShift = s-self.phase;
 
             % Shift back by phase, ceil(start/period)*period, shift back
             % (Draw it out later)
-            projStart = ceil((sShift)/self.period)*self.period+self.phase;
+            projStart = ceil(sShift/self.period)*self.period+self.phase;
             proj = projStart:self.period:t;
         end
 
@@ -45,13 +52,9 @@ classdef Hypothesis < handle
         %   onsets: Onsets to update on
         %   t: Time to end at in ms
         function score(self,onsets,t)
-            % Start window ms back
-            s = t-self.window;
-            if s<0
-                error("At least "+self.window+" seconds needed to "+ ...
-                    "project hypothesis");
-            end
-            proj = project(s,t);
+            proj = self.project(t);
+            
+            s = t-self.window;  % Checked for error by proj
             onsetWind = getWindow(onsets,s,t);
 
             numProj = length(proj);
@@ -69,6 +72,7 @@ classdef Hypothesis < handle
     methods (Static)
         function sim = similarity(hyp1,hyp2)
             % return numeric similarity (or maybe just true false)
+            % TODO
         end
     end
 end
@@ -85,19 +89,25 @@ end
 function matches = closestPairs(proj,onsets)
     projN = length(proj);
     onsetsN = length(onsets);
-    pair = zeros(1,projN);      % Tracks closest onset per proj
+    pair = zeros(1,projN);      % Tracks index of closest onset per proj 
     dist = Inf(1,projN);        % Tracks distance of closest onset
     
     % Find every proj's closest onset
-    pair(1) = onsets(1);
+    pair(1) = 1;
     dist(1) = abs(proj(1)-onsets(pair(1)));
     for i = 1:projN
-        pair(i) = pair(i-1);                    % initialize to prev proj's match TODO: WILL OUT OF BOUNDS FOR 1
-        newDist = abs(proj(i)-onsets(pair(i))); % inital dist
-        while pair(i) < onsetsN && dist(i) >= newDist
-            pair(i) = pair(i)+1;
-            dist(i) = newDist;
-            newDist = abs(proj(i)-onsets(pair(i)+1));
+        if i ~= 1
+            pair(i) = pair(i-1);     % initialize to prev proj's match 
+        end
+        dist(i) = abs(proj(i)-onsets(pair(i)));
+
+        if pair(i) < onsetsN
+            newDist = abs(proj(i)-onsets(pair(i)+1)); % inital dist
+            while pair(i) < onsetsN && newDist < dist(i)
+                newDist = abs(proj(i)-onsets(pair(i)+1));
+                pair(i) = pair(i)+1;
+                dist(i) = newDist;
+            end
         end
     end
 
@@ -106,15 +116,17 @@ function matches = closestPairs(proj,onsets)
     matches = cell(1,min(projN,onsetsN));
     matches{1} = Match(1,dist(1),pair(1));
     matchIdx = 1;
-    for i = 2:projN
+    for i = 2:matchesN
         if matches{matchIdx}.onset ~= pair(i)                     % TODO: WIll out of bounds for 1
-            matches{matchIdx+1}.update(i,dist(i),pair(i));
+            matches{matchIdx+1} = Match(i,dist(i),pair(i));
             matchIdx = matchIdx+1;
         elseif dist(i) < matches{matchIdx}.dist % override its pair
             matches = feedBack(proj,onsets,matches,matchIdx);       % Fix previous ones
             matches{matchIdx}.update(i,dist(i));
         elseif matchIdx < matchesN
-            matches{matchIdx+1} = Match(i,dist(i),pair(i));
+            newDist = abs(proj(i)-onsets(pair(i)+1));
+            matches{matchIdx+1} = Match(i,newDist,pair(i)+1);
+            matchIdx = matchIdx+1;
         end
     end
 end
@@ -146,13 +158,10 @@ end
 %   onsets: List of onset times (ms) in desired window
 %   period: Hypothesis period (ms)
 function numHits = concurrence(proj,onsets,period)
-    % TODO: This is wrong. Need to calculate error by closest, unique
-    % onset, not just corresponding indices. Dimensions wont be equal
     matches = closestPairs(proj,onsets);
-    error = cell2mat(matches).
-    error = abs(proj-onsets);
+    error = cellfun(@(m) m.dist, matches); % extract distances from error
     scaledErr = error/period;
-    hits = 0.01^scaledErr;      % Error weight function, could use Gauss
+    hits = 0.01.^scaledErr;      % Error weight function, could use Gauss
     numHits = sum(hits);
 end
 
