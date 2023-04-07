@@ -16,14 +16,15 @@ classdef Correction < handle
 
             matches = Util.closestPairs(proj,onsetWind);
 
-            calcCorr(hyp,matches,mult,decay)
-            calcScore(hyp,proj,onsetWind,matches)
+            %
+
+            
         end
     end
 
 
     methods (Access = private)
-        function calcCorr(self,hyp,matches,mult,decay)
+        function calcCorr(self,matches)
             projIdx = cellfun(@(m) m.proj,matches);
             onsetIdx = cellfun(@(m) m.onset,matches);
             error = proj(projIdx)-onset(onsetIdx);

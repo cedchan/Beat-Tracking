@@ -1,8 +1,8 @@
 classdef Match < handle
     properties
-        proj
-        dist
-        onset
+        proj    % Index of projection
+        dist    % Distance between projection and onset
+        onset   % Index of onset
     end
 
     methods
