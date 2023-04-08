@@ -4,35 +4,82 @@ classdef BeatTracker < handle
         H = {}      % Cell array of current hypotheses
     end
 
+    properties (SetAccess = immutable)
+        window
+        mult
+        decay
+        delta
+    end
+
     methods
         % Constructor
         % 
         % Inputs:
         %   sampOnsets: List of sequential onsets in ms
-        function obj = BeatTracker(sampOnsets)
-            obj.onsets = sampOnsets;
+        %   window: Size of sliding window for tracking in ms
+        %   mult: Correction multiplier (see Correction.m)
+        %   decay: Correction decay (see Correction.m)
+        %   delta: Similarity tolerance threshold in ms (see Hypothesis.m)
+        function obj = BeatTracker(onsets,window,mult,decay,delta)
+            obj.onsets = onsets;
+            obj.window = window;
+            obj.mult = mult;
+            obj.decay = decay;
+            obj.delta = delta;
         end
 
         % Main beat tracking function, based on onsets fed into program.
         function track(self)
             self.H = {};
-            % append to H all new generated hypothesis trackings
-            for hyp = self.H 
-                % find first onset r_s > r_t - 6s
-                % define correction delta_h for hyp according to (r_s..t)
-                % update hyp.phase, hyp.period based on delta_h
-                % score hyp based on (r_s..t)
-                % append delts_h to hyp's internal corr list 
-                % append score to hyp's internal scores list
-            end
+            for on = 2:length(self.onsets)
+                t = self.onsets(on);
 
-            % Iterate through every unique pair hyp1, hyp2 in H to delete 
-            % ones that are too similar to each other.
-            m = nchoosek(1:length(self.H),2);
-            for i = 1:height(m)
-                hyp1 = self.H{m(i,1)};
-                hyp2 = self.H{m(i,2)};
-                % if h1, h2 too similar, remove the most recently created
+                % Generate new hypothesis from current and previous onsets
+                period = t-self.onsets(on-1);
+                phase = mod(t,period);
+                self.H{end+1} = Hypothesis(period,phase);
+
+                % Calculate start time of window
+                s = t-self.window; 
+                
+                % Skip if not enough time to window
+                if s < 0
+                    continue
+                end
+
+                % Get windowed onsets
+                onsetWind = Util.getWindow(self.onsets,s,t);
+
+                for h = 1:length(self.H)
+                    hyp = self.H{h};
+                    % Get windowed projection
+                    proj = hyp.project(t,self.window);
+    
+                    % Update hypothesis:
+                    %   1. Calculate correction in given window
+                    %   2. Calculate score
+                    %   3. Update hypothesis and store changes
+                    hyp.update(proj,onsetWind,self.mult,self.decay)
+                end
+    
+                % Iterate through every unique pair hyp1, hyp2 in H to delete 
+                % ones that are too similar to each other.
+                if length(self.H) < 2
+                    continue
+                end
+                hypIdx = nchoosek(1:length(self.H),2);
+                delete = [];
+                for i = 1:height(hypIdx)
+                    hyp1 = self.H{hypIdx(i,1)};
+                    hyp2 = self.H{hypIdx(i,2)};
+                    % If h1, h2 too similar, remove the most recent one (TODO:
+                    % see if lower scoring is better)
+                    if Hypothesis.similar(hyp1,hyp2,self.delta)
+                        % Cell array deletion
+                        delete(end+1) = hypIdx(i,2);
+                    end
+                end
+                self.H(delete) = [];
             end
         end
 

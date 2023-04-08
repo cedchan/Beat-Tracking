@@ -1,5 +1,5 @@
 classdef Match < handle
-    properties
+    properties (SetAccess = private)
         proj    % Index of projection
         dist    % Distance between projection and onset
         onset   % Index of onset

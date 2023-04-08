@@ -35,15 +35,9 @@ classdef Util
         
             % Find best matches
         
-            % Truncates to smaller of onset/projection vectors
-            matchesN = min(projN,onsetsN);
-            % Space allocate matches cell array (note that cell array is stored
-            % indices, not proj/onset values)
-            matches = cell(1,matchesN);
+            matches = {};
             % Initialize first match to first pair
             matches{1} = Match(1,dist(1),pair(1));
-            % Index of fully matched pairs
-            matchIdx = 1;
             for i = 2:projN
                 if matches{matchIdx}.onset ~= pair(i)
                     % If no conflict with most recent pair, adds to next idx
@@ -62,9 +56,6 @@ classdef Util
                     matchIdx = matchIdx+1;
                 end
             end
-
-            % Remove empty cells
-            matches = matches(~cellfun('isempty',matches));
         end
 
         

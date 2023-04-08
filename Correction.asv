@@ -1,6 +1,6 @@
 classdef Correction < handle
 
-    properties (SetAccess = immutable)
+    properties (SetAccess = private)
         deltaPhase      % Phase change
         deltaPeriod     % Period change
         score           % Score
@@ -8,38 +8,38 @@ classdef Correction < handle
 
     methods
         % Instantiates object and calculates correction
-        function obj = Correction(hyp,onsets,mult,decay)
-            proj = hyp.project(t);
-            
-            s = t-hyp.window;  % Checked for error by proj
-            onsetWind = Util.getWindow(onsets,s,t);
+        % Inputs:
+        %   proj: Projected beats (ms) in desired window
+        %   onsets: Onsets (ms) in desired window
+        %   mult: Correction multiplier
+        %   decay: Correction decay
+        function obj = Correction(hyp,proj,onsets,mult,decay)
+            matches = Util.closestPairs(proj,onsets)
 
-            matches = Util.closestPairs(proj,onsetWind);
-
-            %
-
-            
+            obj.calcCorr(hyp,proj,onsets,matches,mult,decay)
+            obj.calcScore(hyp,proj,onsets,matches)
         end
     end
 
 
     methods (Access = private)
-        function calcCorr(self,matches)
+        function calcCorr(self,hyp,proj,onsets,matches,mult,decay)
             projIdx = cellfun(@(m) m.proj,matches);
             onsetIdx = cellfun(@(m) m.onset,matches);
-            error = proj(projIdx)-onset(onsetIdx);
-            scaledErr = mult*error*decay.^(abs(error)/hyp.period);
+            error = proj(projIdx)-onsets(onsetIdx);
+            scaledErr = mult*error.*decay.^(abs(error)/hyp.period);
             
             % Solve linear regression Ax=b, where b is the error, x is a
             % 2-element vector representing slope and intercept, and A has
             % a column of the matched projection indices, and a column of
             % 1s for the constant term.
-            h = [projIdx' zeros(length(projIdx),1)]\scaledErr';
+            [h,~] = lsqr([projIdx' ones(length(projIdx),1)],scaledErr');
             
-            self.deltaPeriod = h(0);
+            self.deltaPeriod = h(1);
             % Intercept as change in phase, mod new periodicity (since it
-            % won't make a difference)
-            self.deltaPhase = mod(h(1),hyp.period+h(0));
+            % won't make a difference) and mod again to make positive
+            period = hyp.period+self.deltaPeriod;
+            self.deltaPhase = mod(mod(h(2),period)+period,period);
         end
         
         function calcScore(self,hyp,proj,onsets,matches)
