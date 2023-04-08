@@ -5,22 +5,17 @@ classdef Hypothesis < handle
         phase           % Predicted phase (offset from start)
         score           % Current score
         corrs = {}      % Cell array of corrections
+        start
+        
         history = table([],[],[],[],'VariableNames', ...
                 ["Onset" "Period" "Phase" "Score"]);
     end
 
-    properties (SetAccess = immutable)
-        startOn
-        endOn
-    end
-
     methods
         % Constructor
-        function obj = Hypothesis(period,phase,startOn,endOn)
+        function obj = Hypothesis(period,phase)
             obj.period = period;
             obj.phase = phase;
-            obj.startOn = startOn;
-            obj.endOn = endOn;
         end
 
         % Returns projections from t ms back window ms

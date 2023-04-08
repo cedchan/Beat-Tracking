@@ -15,7 +15,6 @@ classdef Correction < handle
         %   decay: Correction decay
         function obj = Correction(hyp,proj,onsets,mult,decay)
             matches = Util.closestPairs(proj,onsets);
-
             obj.calcCorr(hyp,proj,onsets,matches,mult,decay)
             obj.calcScore(hyp,proj,onsets,matches)
         end
@@ -65,5 +64,6 @@ function numHits = concurrence(matches,period)
     error = cellfun(@(m) m.dist,matches); % extract distances from error
     scaledErr = error/period;
     hits = 0.01.^scaledErr;      % Error weight function, could use Gauss
+    hits = exp(-(error.^2)/(2*period^2));  % Gaussian
     numHits = sum(hits);
 end
