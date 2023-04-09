@@ -16,7 +16,7 @@ classdef Correction < handle
         function obj = Correction(hyp,proj,onsets,mult,decay)
             matches = Util.closestPairs(proj,onsets);
             obj.calcCorr(hyp,proj,onsets,matches,mult,decay)
-            obj.calcScore(hyp,proj,onsets,matches)
+            obj.score = obj.calcScore(hyp,proj,onsets,matches);
         end
     end
 
@@ -38,7 +38,10 @@ classdef Correction < handle
             self.deltaPhase = h(2);
         end
         
-        function calcScore(self,hyp,proj,onsets,matches)
+    end
+
+    methods (Static)
+        function score = calcScore(hyp,proj,onsets,matches)
             numProj = length(proj);
             numOnsets = length(onsets);
             numHits = concurrence(matches,hyp.period); % TODO parameters
@@ -47,7 +50,7 @@ classdef Correction < handle
             precision = numHits/numProj;
             recall = numHits/numOnsets; % Sort of, because onsets aren't "beats"
             f1 = 2*(precision*recall)/(precision+recall); % TODO: Currently unused
-            self.score = precision*recall;
+            score = precision*recall;
         end
     end
 

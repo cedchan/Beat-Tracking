@@ -28,7 +28,7 @@ classdef BeatTracker < handle
             obj.decay = decay;
             obj.delta = delta;
 
-            obj.out = Inf(length(onsets),6);
+            obj.out = zeros(length(onsets),6);
             obj.out(:,1) = obj.onsets';
         end
 
@@ -41,7 +41,7 @@ classdef BeatTracker < handle
                 % Generate new hypothesis from current and previous onsets
                 period = t-self.onsets(on-1);
                 phase = mod(t,period);
-                self.H{end+1} = Hypothesis(period,phase,self.onsets(on-1),t);
+                self.H{end+1} = Hypothesis(period,phase,on-1,on);
 
                 % Calculate start time of window
                 s = t-self.window; 
@@ -65,10 +65,6 @@ classdef BeatTracker < handle
                     %   3. Update hypothesis and store changes
                     hyp.update(proj,onsetWind,self.mult,self.decay)
 
-                    % If scores better than current, overrides
-                    if hyp.score < self.out(on,4)
-                        self.out(on,2:6) = [hyp.startOn hyp.endOn hyp.period hyp.phase hyp.score];
-                    end
                 end
     
                 % Iterate through every unique pair hyp1, hyp2 in H to delete 
@@ -90,18 +86,37 @@ classdef BeatTracker < handle
                 end
                 self.H(delete) = [];
             end
+            self.findOptimum()
         end
 
-%         % Finds optimal beat at different times given score
-%         function res = results(self)
-%             % Rows: Onsets
-%             % Columns: Period, Phase, Score
-%             raw = NaN(length(self.onsets),4,);
-%             raw(:,1) = self.onsets';
-%             for h = 1:length(self.H)
-%                 hyp = self.H{h};
-%                 
-%             end
-%         end
+        
+
+        % Finds optimal beat at different times given score
+        function findOptimum(self)
+            % Rows: Onsets
+            % Columns: Period, Phase, Score
+            for h = 1:length(self.H)
+                hyp = self.H{h};
+                for on = 1:length(self.onsets)
+                    t = self.onsets(on);
+                    s = t-self.window; 
+                    
+                    % Skip if not enough time to window
+                    if s < 0
+                        continue
+                    end
+    
+                    % Get windowed onsets
+                    proj = hyp.project(t,self.window);
+                    onsetWind = Util.getWindow(self.onsets,s,t);
+   
+                    matches = Util.closestPairs(proj,onsetWind);
+                    score = Correction.calcScore(hyp,proj,onsetWind,matches);
+                    if score > self.out(on,6)
+                        self.out(on,2:6) = [hyp.startOn hyp.endOn hyp.period hyp.phase score];
+                    end
+                end
+            end
+        end
     end
 end

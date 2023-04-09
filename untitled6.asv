@@ -6,8 +6,8 @@ onsets = [1 2 2.5 3.5 4];
 for i = 1:2
     onsets = [onsets (onsets(end)+onsets)];
 end
-onsets = [onsets (onsets(end)+[1 4 7 10 13 16])]
-% onsets = [0 1 2 3 4 5 6 7 8 9 10 13 16 19 22 25 28 31 34 37]
+% onsets = [onsets (onsets(end)+[1 4 7 10 13 16])]
+onsets = [0 1 2 3 4 5 6 7 8 9]
 
 % | . | . | . | . 
 % x   x x   x x
