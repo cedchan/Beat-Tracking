@@ -5,17 +5,22 @@ classdef Hypothesis < handle
         phase           % Predicted phase (offset from start)
         score           % Current score
         corrs = {}      % Cell array of corrections
-        start
-        
         history = table([],[],[],[],'VariableNames', ...
                 ["Onset" "Period" "Phase" "Score"]);
     end
 
+    properties (SetAccess = immutable)
+        startOn
+        endOn
+    end
+
     methods
         % Constructor
-        function obj = Hypothesis(period,phase)
+        function obj = Hypothesis(period,phase,startOn,endOn)
             obj.period = period;
             obj.phase = phase;
+            obj.startOn = startOn;
+            obj.endOn = endOn;
         end
 
         % Returns projections from t ms back window ms
@@ -46,8 +51,12 @@ classdef Hypothesis < handle
             
             % Update period and phase and score
             self.score = corr.score;
-            self.period = self.period+corr.deltaPeriod;
-            self.phase = mod(self.phase+corr.deltaPhase,self.period);
+
+            % TODO Set cutoff for updates in case rule gets too bad.
+            if self.score > 0.1
+                self.period = self.period+corr.deltaPeriod;
+                self.phase = mod(self.phase+corr.deltaPhase,self.period);
+            end
 
             % Update history
             self.history(end+1,:) = {onsets(end) self.period self.phase self.score};

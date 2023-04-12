@@ -6,7 +6,7 @@ classdef BeatTracker < handle
     end
 
     properties (SetAccess = immutable)
-        window
+        window  % Note: Window must be greater than period, or there will be many errors
         mult
         decay
         delta
@@ -117,6 +117,81 @@ classdef BeatTracker < handle
                     end
                 end
             end
+
+            if height(self.out) < 2
+                return
+            end
+
+            self.formatOut()
         end
+
+        function outTab = formatOut(self)
+            outTab = array2table(self.out(self.out(:,2) > 0,:), ...
+                'VariableNames', ["Onset Time" "Hyp Start Ind" ...
+                "Hyp End Ind" "Period" "Phase" "Score"]);
+        end
+
+        function fitted = fitHyp(self)
+            % Create dict of [start end] to hypothesis
+            hyps = dictionary();
+            for h = 1:length(self.H)
+                hyp = self.H{h};
+                hyps({[hyp.startOn hyp.endOn]}) = hyp;
+            end
+
+%             fitted = table([],[],[],[],[],[],[],'VariableNames', ...
+%                 ["Interval Start","Interval End","Hyp Start Ind", ...
+%                 "Hyp End Ind","Period","Phase","Score"]);
+            fitted = zeros(0,7);
+            fitHyps = {};
+
+            hypId = self.out(1,2:3);
+            wind = [self.onsets(1) self.out(1,1)];
+
+            for on = 2:length(self.onsets)
+                nextId = self.out(on,2:3);
+
+                if isequal(hypId,[0 0])
+                    hypId = nextId;
+                    continue
+                end
+
+                if isequal(hypId,nextId)
+                    wind(2) = self.out(on,1);
+                else
+                    t = self.onsets(on);
+                    windLen = wind(2)-wind(1);
+                    s = t-windLen;
+                    
+                    % Skip if not enough time to window
+                    if s < 0
+                        continue
+                    end
+    
+                    hyp = hyps({hypId});
+
+                    % Get windowed onsets
+                    proj = hyp.project(t,windLen);
+                    onsetWind = Util.getWindow(self.onsets,s,t);
+   
+                    corr = Correction(hyp,proj,onsetWind,self.mult,self.decay);
+                    
+                    period = hyp.period+corr.deltaPeriod;
+                    phase = hyp.phase+corr.deltaPhase;
+                    hyp = Hypothesis(period,phase,hyp.startOn,hyp.endOn);
+                    
+                    fitHyps{end+1} = hyp; % TODO
+                    fitted(end+1,:) = [wind(1) wind(2) hyp.startOn hyp.endOn hyp.period hyp.phase corr.score];
+
+                    % Reset window
+                    wind(1) = self.out(on,1);
+                    hypId = nextId;
+                end
+            end
+
+            % TODO handle last interval
+        end
+
+        % TODO ritardando??
     end
 end

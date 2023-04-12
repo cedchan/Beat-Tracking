@@ -45,14 +45,21 @@ classdef Hypothesis < handle
         %   t: Time to end at in ms
         function update(self,proj,onsets,mult,decay)
             corr = Correction(self,proj,onsets,mult,decay);
+            if isempty(corr.score)
+                return
+            end
 
             % Add correction to list of corrections
             self.corrs{end+1} = corr;
             
             % Update period and phase and score
             self.score = corr.score;
-            self.period = self.period+corr.deltaPeriod;
-            self.phase = mod(self.phase+corr.deltaPhase,self.period);
+
+            % TODO Set cutoff for updates in case rule gets too bad.
+            if self.score > 0.1
+                self.period = self.period+corr.deltaPeriod;
+                self.phase = mod(self.phase+corr.deltaPhase,self.period);
+            end
 
             % Update history
             self.history(end+1,:) = {onsets(end) self.period self.phase self.score};

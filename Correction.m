@@ -14,6 +14,9 @@ classdef Correction < handle
         %   mult: Correction multiplier
         %   decay: Correction decay
         function obj = Correction(hyp,proj,onsets,mult,decay)
+            if isempty(proj) || isempty(onsets)
+                return
+            end
             matches = Util.closestPairs(proj,onsets);
             obj.calcCorr(hyp,proj,onsets,matches,mult,decay)
             obj.score = obj.calcScore(hyp,proj,onsets,matches);

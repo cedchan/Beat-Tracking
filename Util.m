@@ -10,6 +10,12 @@ classdef Util
         function matches = closestPairs(proj,onsets)
             projN = length(proj);
             onsetsN = length(onsets);
+
+            if projN == 0 || onsetsN == 0
+                matches = {};
+                return
+            end
+
             pair = zeros(1,projN);      % Tracks index of closest onset per proj 
             dist = Inf(1,projN);        % Tracks distance of closest onset
             
