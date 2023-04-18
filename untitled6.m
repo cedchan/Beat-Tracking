@@ -20,7 +20,7 @@ window = 10;
 mult = 3;
 decay = 0.00001;
 delta = 0.25;
-tracker = BeatTracker(onsets,window,mult,decay,delta);
+tracker = BeatModel(onsets,window,mult,decay,delta);
 tracker.track();
 
 period = cellfun(@(h) h.period,tracker.H);
