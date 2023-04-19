@@ -20,13 +20,12 @@
 % 
 % m = Util.closestPairs(proj,onsets)
 
-[x,fs] = audioread('test.wav');
+[x,fs] = audioread('test2.wav');
 x=x(:,1);
 
 time = (0:(length(x)-1))/fs;
 % figure()
 % plot(time,x)
-
 
 % Length of both STFT window and moving median window (later)
 windN = 128;
@@ -51,22 +50,27 @@ dist = (amp1.^2+amp0.^2-2*amp1.*amp0.*cos(dPhase)).^0.5;
 cmplxDm = sum(dist(1:height(dist)/2,:),1);
 
 % Normalize
-cmplxDm = normalize(cmplxDm);
+cmplxDm = (cmplxDm-mean(cmplxDm))/range(cmplxDm);
 
 % Low-pass filter
-fc = 200; % Cuttoff frequency (Hz)
+fc = 600; % Cuttoff frequency (Hz)
 [b,a] = butter(6,fc/(fs/2));
 cmplxDm = filter(b,a,cmplxDm);
+cmplxDm = flip(filter(b,a,flip(cmplxDm))); % Apply on flipped for phase shift
+cmplxDm = max(cmplxDm,0);
 
 % Subtract moving median adaptive threshold
-threshold = 0.05+1*movmedian(cmplxDm,windN);
+threshold = 0.05+1*movmedian(cmplxDm,60*fs/1000);
 cmplxDm = max(cmplxDm-threshold,0); % Max is to cut off negative vals
 
 % Find local maxima as onsets
+timeFft = (0:(length(cmplxDm)-1))/fs*(windN-overlap);
 [~,peakLocs] = findpeaks(cmplxDm);
 onsets = timeFft(peakLocs);
 
 figure()
-timeFft = (0:(length(cmplxDm)-1))/fs*(windN-overlap);
-plot(timeFft,cmplxDm)
+hold on
+plot(time,x)
+% plot(timeFft,cmplxDm,timeFft,threshold)
+hold off
 xline(onsets)

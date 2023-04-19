@@ -121,8 +121,6 @@ classdef BeatModel < handle
             if height(self.out) < 2
                 return
             end
-
-            self.formatOut()
         end
 
         function outTab = formatOut(self)

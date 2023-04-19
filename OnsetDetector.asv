@@ -5,29 +5,23 @@ classdef OnsetDetector < handle
         fs          % Sampling frequency
     end
 
-    properties (Constant)
-        WIND_N = 128
-        OVERLAP = 64
-        MED_SHIFT = 0.05
-        MED_SCALE = 1
-    end
-
     methods        
         % Inputs:
         %   x: Audio vector
         %   fs: Sampling frequency of audio
         function obj = OnsetDetector(x,fs)
-            obj.fs = fs;
-            obj.detectFunc(x)
+            obj.detectFunc(x,fs)
             obj.findPeaks()
         end
     end
 
     methods (Access = private)
-        function detectFunc(self,x)
+        function detectFunc(self,x,fs)
             % Length of both STFT window and moving median window (later)
+            windN = 128;
             % Overlap of STFT windows
-            S = stft(x,self.fs,'Window',hann(self.WIND_N),'OverlapLength',self.OVERLAP);
+            overlap = 64;
+            S = stft(x,fs,'Window',hann(windN),'OverlapLength',overlap);
             nS = width(S);  % num of windowed segments
             
             % Amplitude
@@ -59,11 +53,11 @@ classdef OnsetDetector < handle
             cd = max(cd,0);
             
             % Subtract moving median adaptive threshold
-            threshold = self.MED_SHIFT+self.MED_SCALE*movmedian(cd,60*self.fs/1000);
+            threshold = 0.05+1*movmedian(cd,60*self.fs/1000);
             cd = max(cd-threshold,0); % Max is to cut off negative vals
             
             % Find local maxima as onsets
-            timeFft = (0:(length(cd)-1))/self.fs*(self.WIND_N-self.OVERLAP);
+            timeFft = (0:(length(cd)-1))/self.fs*(windN-overlap);
             [~,peakLocs] = findpeaks(cd);
             self.onsets = timeFft(peakLocs);
         end
