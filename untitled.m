@@ -22,12 +22,28 @@
 
 [x,fs] = audioread('test.wav');
 x=x(:,1);
-S = stft(x,fs);
+
+time = (0:(length(x)-1))/fs;
+figure()
+plot(time,x)
+
+windN = 128;
+overlap = 64;
+S = stft(x,fs,'Window',hann(windN),'OverlapLength',overlap);
 nS = width(S);  % num of windowed segments
 amp = abs(S);
 amp1 = amp(:,3:nS);
 amp0 = amp(:,2:(nS-1));
+
 phase = angle(S);
 dPhase = phase(:,3:nS)-2*phase(:,2:(nS-1))+phase(:,1:(nS-2));
 dist = (amp1.^2+amp0.^2-2*amp1.*amp0.*cos(dPhase)).^0.5;
-spec = sum(dist(1:height(dist)/2),1);
+cmplxDm = sum(dist(1:height(dist)/2,:),1);
+
+cmplxDm = cmplxDm-mean(cmplxDm)
+
+figure()
+
+timeFft = (0:(length(cmplxDm)-1))/fs*(windN-overlap);
+threshold = 1.5*movmedian(cmplxDm,windN);
+plot(timeFft,cmplxDm,timeFft,threshold)
