@@ -52,8 +52,8 @@ classdef Correction < handle
             % This is like precision and recall
             precision = numHits/numProj;
             recall = numHits/numOnsets; % Sort of, because onsets aren't "beats"
-            f1 = 2*(precision*recall)/(precision+recall); % TODO: Currently unused
-            score = precision*recall;
+            score = 2*(precision*recall)/(precision+recall); % TODO: Currently unused
+%             score = precision*recall;
         end
     end
 
@@ -68,8 +68,8 @@ end
 %   period: Hypothesis period (ms)
 function numHits = concurrence(matches,period)
     error = cellfun(@(m) m.dist,matches); % extract distances from error
-    scaledErr = error/period;
-    hits = 0.01.^scaledErr;      % Error weight function, could use Gauss
+%     scaledErr = error/period;
+%     hits = 0.01.^scaledErr;      % Error weight function, could use Gauss
     hits = exp(-(error.^2)/(2*period^2));  % Gaussian
     numHits = sum(hits);
 end

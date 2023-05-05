@@ -22,5 +22,12 @@
 
 [x,fs] = audioread('test2.wav');
 x=x(:,1);
+od = OnsetDetector(x,fs)
 
-OnsetDetector(x,fs).onsets
+subplot(2,1,1)
+plot(x)
+subplot(2,1,2)
+plot(od.cmplxDm)
+figure()
+plot(x)
+xline(od.onsets)

@@ -19,7 +19,7 @@ onsets = 10*[0 1 1.5 2.5 3 4 5 5.5 6.5 7 8 9 9.5 10.5 11];
 
 %%%%%
 
-[x,fs] = audioread('test2.wav');
+[x,fs] = audioread('br.mp3');
 x=x(:,1);
 
 onsets = OnsetDetector(x,fs).onsets;
