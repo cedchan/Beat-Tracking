@@ -72,6 +72,6 @@ function numHits = concurrence(matches,period)
 %     scaledErr = error/period;
 %     hits = 0.01.^scaledErr;      % Error weight function, could use Gauss
 %     hits = exp(-(error.^2)/(2*period^2));  % Gaussian
-    hits = exp(-(2*pi*abs(error)./period).^1.5);
+    hits = exp(-(2*pi*abs(error)./period).);
     numHits = sum(hits);
 end
