@@ -6,7 +6,7 @@ classdef OnsetDetector < handle
     end
 
     properties (Constant)
-        WIND_N = 128
+        WIND_N = 128 
         OVERLAP = 64
         MED_SHIFT = 0.05
         MED_SCALE = 1

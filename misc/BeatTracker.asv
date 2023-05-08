@@ -15,12 +15,10 @@ classdef BeatTracker < handle
             obj.delta = delta;
         end
 
-        function out = beats(self,x,fs)
+        function out = beats(x,fs)
             onsets = OnsetDetector(x,fs).onsets;
-            model = BeatModel(onsets,self.window,self.mult,self.decay,self.delta);
-            model.track();
-            model.formatOut()
-            out = model.out;
+            model = BeatModel(oonsets,window,mult,decay,delta)
         end
     end
+
 end

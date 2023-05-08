@@ -6,7 +6,7 @@ classdef BeatModel < handle
     end
 
     properties (SetAccess = immutable)
-        window  % Note: Window must be greater than period, or there will be many errors
+        window  % Note: Window must be greater than period
         mult
         decay
         delta
@@ -186,10 +186,6 @@ classdef BeatModel < handle
                     hypId = nextId;
                 end
             end
-
-            % TODO handle last interval
         end
-
-        % TODO ritardando??
     end
 end
