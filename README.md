@@ -1,4 +1,6 @@
-This is a MATLAB implementation of a beat tracking algorithm that uses complex-domain onset detection[^1] and a multiple-agent beat model[^2]. Detailed information about the implementation, background, and appropriate citations may be found at [link TK].
+# Dynamic Beat Tracking: A Multiple-Agent Approach for Tempo Variation
+
+This is a MATLAB implementation of a beat tracking algorithm that uses complex-domain onset detection[^1] and a multiple-agent beat model[^2]. Detailed information about the implementation, background, and appropriate citations may be found <a href="https://drive.google.com/file/d/1yR6SkaxDkEOfPfXmfeYw10AJ6-bOod9W/view?usp=sharing">here</a>.
 
 ## Using the Program
 
